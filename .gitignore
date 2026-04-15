@@ -3,3 +3,5 @@
 
 # Ignore Testing files
 TEST.py
+
+.venv/
