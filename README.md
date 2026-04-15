@@ -33,15 +33,3 @@ Gradient boosting tree model trained for feature importance insights and ensembl
 
 ---
 
-## ⚙️ Tech Stack
-
-| Component | Technology |
-|------------|-------------|
-| Data Processing | Pandas, NumPy |
-| Model Training | PyTorch, XGBoost |
-| Deployment | FastAPI |
-| Visualization | Matplotlib |
-| Environment | Python 3.12 |
-
----
-
