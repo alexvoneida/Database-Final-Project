@@ -43,10 +43,10 @@ def fetch_player_stats(player_id: int, season: str, retries: int = 3, timeout: i
 
 table = pd.DataFrame()
 for player in nba_players:
-    player_stats = fetch_player_stats(player['id'], season='2023-24')
+    player_stats = fetch_player_stats(player['id'], season='2025-26')
     if player_stats is not None:
         table = pd.concat([table, player_stats], ignore_index=True)
     time.sleep(0.3) #pause to avoid rate limiting
     
-table.to_parquet('../parquet/player_game_logs_2023-24_FINAL.parquet', index=False)
+table.to_parquet('../parquet/player_game_logs_2025-26_FINAL.parquet', index=False)
 print(table)

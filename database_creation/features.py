@@ -75,7 +75,7 @@ def GET_LAST_N_GAMES(df: pd.DataFrame, n: int, player_id: int, game_id: str):
     return player_games.head(n)
 
 def main():
-    df = pd.read_parquet('../parquet/player_game_logs_2023-24_FINAL.parquet')
+    df = pd.read_parquet('../parquet/player_game_logs_2025-26_FINAL.parquet')
     
     for row in df.itertuples():
         print(f"Processing row {row.Index + 1}")
@@ -94,7 +94,7 @@ def main():
         df.at[row.Index, 'PLUS_MINUS_last5'] = PLUS_MINUS_last5(df_last5)
         df.at[row.Index, 'FG_PCT_last5'] = FG_PCT_last5(df_last5)
         
-    df.to_parquet('../parquet/player_game_logs_with_features_2023-24_FINAL.parquet', index=False)
+    df.to_parquet('../parquet/player_game_logs_with_features_2025-26_FINAL.parquet', index=False)
     print(df)
         
 if __name__ == "__main__":
