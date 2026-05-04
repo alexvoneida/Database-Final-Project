@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row align-items-center mb-4">
+        <div class="col">
+            <h1 class="display-4">Team Profile: {{ team_abbr }}</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Stats Graph -->
+        <div class="col-md-12">
+            <div class="card shadow border-0 p-4">
+                <h4 class="mb-3">Offensive vs Defensive Rating (Last 15 Games)</h4>
+                <canvas id="teamChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('teamChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ labels|tojson }},
+            datasets: [
+                {
+                    label: 'Offensive Rating',
+                    data: {{ off_ratings|tojson }},
+                    borderColor: '#198754', // Bootstrap Success Green
+                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: 'Defensive Rating',
+                    data: {{ def_ratings|tojson }},
+                    borderColor: '#dc3545', // Bootstrap Danger Red
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: false, title: { display: true, text: 'Rating Points' } }
+            }
+        }
+    });
+</script>
+{% endblock %}

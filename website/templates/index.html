@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="p-5 mb-4 bg-dark text-white rounded-3 shadow">
+    <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold">🏀 NBA Analytics Portal</h1>
+        <p class="col-md-8 fs-4">Explore rolling performance trends for players and teams. Data sourced from your CSCI403 database.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Player Selection Card -->
+    <div class="col-md-6">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary text-white rounded-circle p-3 me-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
+                            <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3Zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title mb-0">Player Analysis</h3>
+                </div>
+                <p class="text-muted">View individual shooting percentages, usage rates, and point trends.</p>
+                
+                <div class="input-group mb-3">
+                    <select class="form-select form-select-lg" id="playerSelect">
+                        <option selected disabled>Choose a player...</option>
+                        {% for p_id, name in players %}
+                            <option value="{{ p_id }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-primary px-4" onclick="goToPlayer()">Analyze</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Selection Card -->
+    <div class="col-md-6">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success text-white rounded-circle p-3 me-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-shield-shaded" viewBox="0 0 16 16">
+                            <path d="M8 14.933a.615.615 0 0 0 .1-.025c.076-.023.174-.061.294-.118.24-.113.547-.29.893-.533a10.726 10.726 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067v13.866zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/>
+                        </svg>
+                    </div>
+                    <h3 class="card-title mb-0">Team Ratings</h3>
+                </div>
+                <p class="text-muted">Compare offensive and defensive efficiency across the league.</p>
+                
+                <div class="input-group mb-3">
+                    <select class="form-select form-select-lg" id="teamSelect">
+                        <option selected disabled>Choose a team...</option>
+                        {% for t in teams %}
+                            <option value="{{ t }}">{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-success px-4" onclick="goToTeam()">Explore</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function goToPlayer() {
+        const id = document.getElementById('playerSelect').value;
+        if(id !== "Choose a player...") window.location.href = '/player/' + id;
+    }
+    function goToTeam() {
+        const abbr = document.getElementById('teamSelect').value;
+        if(abbr !== "Choose a team...") window.location.href = '/team/' + abbr;
+    }
+</script>
+{% endblock %}
