@@ -62,19 +62,19 @@ def player_stats(player_id):
         # Table: player_rolling_stats
         cursor.execute("""
             SELECT pts_last5, reb_last5, ast_last5, usage_last5, (fg_pct_last5 * 100)
-            FROM group120836.player_rolling_stats 
-            WHERE player_id = %s 
-            ORDER BY id DESC LIMIT 1
+            FROM group120836.player_rolling_stats
+            WHERE player_id = %s
+            ORDER BY game_id DESC LIMIT 1
         """, (player_id,))
         stats = cursor.fetchone()
 
         # 3. Fetch Historical Trend (Last 10 games for Line Chart)
         # Table: player_rolling_stats
         cursor.execute("""
-            SELECT pts_last5 
-            FROM group120836.player_rolling_stats 
-            WHERE player_id = %s 
-            ORDER BY id DESC LIMIT 10
+            SELECT pts_last5
+            FROM group120836.player_rolling_stats
+            WHERE player_id = %s
+            ORDER BY game_id DESC LIMIT 10
         """, (player_id,))
         
         raw_trend = cursor.fetchall()
