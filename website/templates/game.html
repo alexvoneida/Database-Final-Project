@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item"><a href="/player/{{ player_id }}">{{ info[0] }}</a></li>
+                <li class="breadcrumb-item active">
+                    {% if game_info %}{{ game_info[0] }} — {{ game_info[1] }}{% else %}Game{% endif %}
+                </li>
+            </ol>
+        </nav>
+        <div class="d-flex align-items-center">
+            <div class="bg-primary text-white rounded-3 p-3 me-3 shadow">
+                <h2 class="mb-0">{{ info[1] }}</h2>
+            </div>
+            <div>
+                <h1 class="display-4 fw-bold mb-0">{{ info[0] }}</h1>
+                {% if game_info %}
+                <p class="text-muted mb-0 fs-5">{{ game_info[0] }} &mdash; {{ game_info[1] }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Rolling Stat Cards -->
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 text-center h-100">
+            <div class="card-body">
+                <h6 class="text-uppercase text-muted small fw-bold">Points (Last 5)</h6>
+                <h2 class="display-6 fw-bold text-primary">{{ stats[0] if stats else '—' }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 text-center h-100">
+            <div class="card-body">
+                <h6 class="text-uppercase text-muted small fw-bold">Rebounds (Last 5)</h6>
+                <h2 class="display-6 fw-bold text-success">{{ stats[1] if stats else '—' }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 text-center h-100">
+            <div class="card-body">
+                <h6 class="text-uppercase text-muted small fw-bold">Assists (Last 5)</h6>
+                <h2 class="display-6 fw-bold text-info">{{ stats[2] if stats else '—' }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 text-center h-100">
+            <div class="card-body">
+                <h6 class="text-uppercase text-muted small fw-bold">Field Goal %</h6>
+                <h2 class="display-6 fw-bold text-warning">{{ stats[4] if stats else '—' }}{% if stats %}%{% endif %}</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Radar Chart -->
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0 p-4 h-100">
+            <h4 class="fw-bold mb-4">Player Archetype</h4>
+            <div style="max-height: 350px;">
+                <canvas id="radarChart"></canvas>
+            </div>
+            <p class="text-muted small mt-3">Each axis scaled to a per-stat max (PTS/40, REB/15, AST/12, Usage/30, FG%/100%).</p>
+        </div>
+    </div>
+
+    <!-- Line Chart -->
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0 p-4 h-100">
+            <h4 class="fw-bold mb-4">Points (Last 10 Games)</h4>
+            <canvas id="ptsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Actual vs Predicted -->
+    {% if actual or prediction %}
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white fw-bold">Current Game Stats vs Model Prediction</div>
+            <div class="card-body">
+                <div class="row g-3 text-center">
+                    <div class="col-md-3">
+                        <h6 class="text-uppercase text-muted small fw-bold">Points</h6>
+                        <div class="d-flex justify-content-center gap-3 align-items-baseline">
+                            <span class="display-6 fw-bold text-primary">{{ actual.pts if actual else '—' }}</span>
+                            <span class="text-muted">vs</span>
+                            <span class="fs-4 fw-semibold text-secondary">{{ prediction.pts if prediction else '—' }}</span>
+                        </div>
+                        <div class="d-flex justify-content-center gap-3">
+                            <small class="text-muted">actual</small>
+                            <small class="text-muted" style="visibility:hidden;">vs</small>
+                            <small class="text-muted">predicted</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-uppercase text-muted small fw-bold">Rebounds</h6>
+                        <div class="d-flex justify-content-center gap-3 align-items-baseline">
+                            <span class="display-6 fw-bold text-success">{{ actual.reb if actual else '—' }}</span>
+                            <span class="text-muted">vs</span>
+                            <span class="fs-4 fw-semibold text-secondary">{{ prediction.reb if prediction else '—' }}</span>
+                        </div>
+                        <div class="d-flex justify-content-center gap-3">
+                            <small class="text-muted">actual</small>
+                            <small class="text-muted" style="visibility:hidden;">vs</small>
+                            <small class="text-muted">predicted</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-uppercase text-muted small fw-bold">Assists</h6>
+                        <div class="d-flex justify-content-center gap-3 align-items-baseline">
+                            <span class="display-6 fw-bold text-info">{{ actual.ast if actual else '—' }}</span>
+                            <span class="text-muted">vs</span>
+                            <span class="fs-4 fw-semibold text-secondary">{{ prediction.ast if prediction else '—' }}</span>
+                        </div>
+                        <div class="d-flex justify-content-center gap-3">
+                            <small class="text-muted">actual</small>
+                            <small class="text-muted" style="visibility:hidden;">vs</small>
+                            <small class="text-muted">predicted</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <h6 class="text-uppercase text-muted small fw-bold">FG%</h6>
+                        <div class="d-flex justify-content-center gap-3 align-items-baseline">
+                            <span class="display-6 fw-bold text-warning">{{ actual.fg_pct if actual else '—' }}{% if actual %}%{% endif %}</span>
+                            <span class="text-muted">vs</span>
+                            <span class="fs-4 fw-semibold text-secondary">{{ prediction.fg_pct if prediction else '—' }}{% if prediction %}%{% endif %}</span>
+                        </div>
+                        <div class="d-flex justify-content-center gap-3">
+                            <small class="text-muted">actual</small>
+                            <small class="text-muted" style="visibility:hidden;">vs</small>
+                            <small class="text-muted">predicted</small>
+                        </div>
+                    </div>
+                </div>
+
+                {% if actual and prediction %}
+                <hr class="my-4">
+                <canvas id="compareChart" height="80"></canvas>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    const radarCtx = document.getElementById('radarChart').getContext('2d');
+    new Chart(radarCtx, {
+        type: 'radar',
+        data: {
+            labels: ['Points', 'Rebounds', 'Assists', 'Usage', 'FG%'],
+            datasets: [{
+                label: 'Rolling Performance',
+                data: {{ radar_data|tojson }},
+                fill: true,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgb(54, 162, 235)',
+                pointBackgroundColor: 'rgb(54, 162, 235)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgb(54, 162, 235)'
+            }]
+        },
+        options: {
+            elements: { line: { borderWidth: 3 } },
+            scales: {
+                r: {
+                    angleLines: { display: true },
+                    suggestedMin: 0,
+                    ticks: { display: false }
+                }
+            }
+        }
+    });
+
+    const ptsCtx = document.getElementById('ptsChart').getContext('2d');
+    new Chart(ptsCtx, {
+        type: 'line',
+        data: {
+            labels: {{ labels|tojson }},
+            datasets: [{
+                label: 'Points',
+                data: {{ pts_history|tojson }},
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    {% if actual and prediction %}
+    const compareCtx = document.getElementById('compareChart').getContext('2d');
+    new Chart(compareCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Points', 'Rebounds', 'Assists', 'FG%'],
+            datasets: [
+                {
+                    label: 'Actual',
+                    data: [{{ actual.pts }}, {{ actual.reb }}, {{ actual.ast }}, {{ actual.fg_pct }}],
+                    backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                    borderRadius: 4
+                },
+                {
+                    label: 'Predicted',
+                    data: [{{ prediction.pts }}, {{ prediction.reb }}, {{ prediction.ast }}, {{ prediction.fg_pct }}],
+                    backgroundColor: 'rgba(108, 117, 125, 0.7)',
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %}

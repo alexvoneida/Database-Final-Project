@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Back Button & Header -->
 <div class="row mb-4">
     <div class="col">
         <nav aria-label="breadcrumb">
@@ -12,133 +11,35 @@
         </nav>
         <div class="d-flex align-items-center">
             <div class="bg-primary text-white rounded-3 p-3 me-3 shadow">
-                <h2 class="mb-0">{{ info[1] }}</h2> <!-- Team Abbr -->
+                <h2 class="mb-0">{{ info[1] }}</h2>
             </div>
-            <h1 class="display-4 fw-bold mb-0">{{ info[0] }}</h1> <!-- Player Name -->
+            <h1 class="display-4 fw-bold mb-0">{{ info[0] }}</h1>
         </div>
     </div>
 </div>
 
-<div class="row g-4">
-    <!-- Row 1: Quick Stats Cards -->
-    <div class="col-md-3">
-        <div class="card shadow-sm border-0 text-center h-100">
-            <div class="card-body">
-                <h6 class="text-uppercase text-muted small fw-bold">Points (Last 5)</h6>
-                <h2 class="display-6 fw-bold text-primary">{{ stats[0] }}</h2>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0 p-4">
+            <h4 class="fw-bold mb-3">Select a Game</h4>
+            <p class="text-muted">Choose a game to view rolling stats and model predictions.</p>
+            <div class="input-group">
+                <select class="form-select form-select-lg" id="gameSelect">
+                    <option selected disabled>Choose a game...</option>
+                    {% for game_id, game_date, matchup in games %}
+                        <option value="{{ game_id }}">{{ game_date }} — {{ matchup }}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-primary px-4" onclick="goToGame()">View</button>
             </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card shadow-sm border-0 text-center h-100">
-            <div class="card-body">
-                <h6 class="text-uppercase text-muted small fw-bold">Rebounds (Last 5)</h6>
-                <h2 class="display-6 fw-bold text-success">{{ stats[1] }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card shadow-sm border-0 text-center h-100">
-            <div class="card-body">
-                <h6 class="text-uppercase text-muted small fw-bold">Assists (Last 5)</h6>
-                <h2 class="display-6 fw-bold text-info">{{ stats[2] }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card shadow-sm border-0 text-center h-100">
-            <div class="card-body">
-                <h6 class="text-uppercase text-muted small fw-bold">Field Goal %</h6>
-                <h2 class="display-6 fw-bold text-warning">{{ stats[4] }}%</h2>
-            </div>
-        </div>
-    </div>
-
-    <!-- Row 2: Charts -->
-    <!-- Radar Chart: Player Profile -->
-    <div class="col-md-5">
-        <div class="card shadow-sm border-0 p-4 h-100">
-            <h4 class="fw-bold mb-4">Player Archetype</h4>
-            <div style="max-height: 350px;">
-                <canvas id="radarChart"></canvas>
-            </div>
-            <p class="text-muted small mt-3">
-                Visualizing balance between scoring, playmaking, and efficiency.
-            </p>
-        </div>
-    </div>
-
-    <!-- Line Chart: Scoring Trend -->
-    <div class="col-md-7">
-        <div class="card shadow-sm border-0 p-4 h-100">
-            <h4 class="fw-bold mb-4">Points Trend (Rolling 5)</h4>
-            <canvas id="ptsChart"></canvas>
         </div>
     </div>
 </div>
 
-<!-- Chart Scripting -->
 <script>
-    // 1. Radar Chart Setup
-    const radarCtx = document.getElementById('radarChart').getContext('2d');
-    new Chart(radarCtx, {
-        type: 'radar',
-        data: {
-            labels: ['Points', 'Rebounds', 'Assists', 'Usage', 'FG%'],
-            datasets: [{
-                label: 'Recent Performance',
-                data: {{ radar_data|tojson }},
-                fill: true,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgb(54, 162, 235)',
-                pointBackgroundColor: 'rgb(54, 162, 235)',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgb(54, 162, 235)'
-            }]
-        },
-        options: {
-            elements: { line: { borderWidth: 3 } },
-            scales: {
-                r: {
-                    angleLines: { display: true },
-                    suggestedMin: 0,
-                    ticks: { display: false }
-                }
-            }
-        }
-    });
-
-    // 2. Line Chart Setup
-    const ptsCtx = document.getElementById('ptsChart').getContext('2d');
-    new Chart(ptsCtx, {
-        type: 'line',
-        data: {
-            labels: {{ labels|tojson }},
-            datasets: [{
-                label: 'Rolling Points Average',
-                data: {{ pts_history|tojson }},
-                borderColor: '#0d6efd',
-                backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                fill: true,
-                tension: 0.4,
-                pointRadius: 5,
-                pointHoverRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { 
-                    beginAtZero: false,
-                    grid: { color: 'rgba(0,0,0,0.05)' }
-                },
-                x: { 
-                    grid: { display: false }
-                }
-            }
-        }
-    });
+    function goToGame() {
+        const id = document.getElementById('gameSelect').value;
+        if (id !== "Choose a game...") window.location.href = '/player/{{ player_id }}/game/' + id;
+    }
 </script>
 {% endblock %}
