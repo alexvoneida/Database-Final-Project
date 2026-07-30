@@ -1,20 +1,21 @@
 from flask import Flask, render_template, request
-import pg8000
-import getpass
+import sqlite3
 import sys
 import os
 import numpy as np
 import torch
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _REPO_ROOT)
 from multi_model import NBAMultiOutputModel
 
 app = Flask(__name__)
 
-login = input('Login username: ')
-secret = getpass.getpass()
+# Reads the SQLite snapshot built by build_local_db.py; the original Postgres
+# instance on ada.mines.edu is no longer reachable.
+_DB_PATH = os.path.join(_REPO_ROOT, 'local.db')
 
-_MODEL_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models', 'multi_output_model.pth')
+_MODEL_PATH = os.path.join(_REPO_ROOT, 'models', 'multi_output_model.pth')
 try:
     prediction_model = torch.load(_MODEL_PATH, map_location='cpu', weights_only=False)
     prediction_model.eval()
@@ -23,15 +24,9 @@ except Exception as e:
     prediction_model = None
 
 def get_db_connection():
-    conn = pg8000.connect(
-        user=login,
-        password=secret,
-        database='csci403',
-        host='ada.mines.edu'
-    )
-    cursor = conn.cursor()
-    cursor.execute("SET search_path TO group120836")
-    return conn
+    if not os.path.exists(_DB_PATH):
+        raise RuntimeError(f'{_DB_PATH} is missing. Run: python build_local_db.py')
+    return sqlite3.connect(_DB_PATH)
 
 # --- ROUTES ---
 
@@ -57,8 +52,8 @@ def player_stats(player_id):
     try:
         cursor.execute("""
             SELECT player_name, team_abbreviation
-            FROM group120836.players
-            WHERE player_id = %s
+            FROM players
+            WHERE player_id = ?
         """, (player_id,))
         player_info = cursor.fetchone()
 
@@ -67,9 +62,9 @@ def player_stats(player_id):
 
         cursor.execute("""
             SELECT pgs.game_id, g.game_date, g.matchup
-            FROM group120836.player_game_stats pgs
-            JOIN group120836.games g ON pgs.game_id = g.game_id
-            WHERE pgs.player_id = %s
+            FROM player_game_stats pgs
+            JOIN games g ON pgs.game_id = g.game_id
+            WHERE pgs.player_id = ?
             ORDER BY g.game_date DESC
             LIMIT 50
         """, (player_id,))
@@ -91,8 +86,8 @@ def game_stats(player_id, game_id):
     try:
         cursor.execute("""
             SELECT player_name, team_abbreviation
-            FROM group120836.players
-            WHERE player_id = %s
+            FROM players
+            WHERE player_id = ?
         """, (player_id,))
         player_info = cursor.fetchone()
         if not player_info:
@@ -100,25 +95,25 @@ def game_stats(player_id, game_id):
 
         cursor.execute("""
             SELECT game_date, matchup
-            FROM group120836.games
-            WHERE game_id = %s
+            FROM games
+            WHERE game_id = ?
         """, (game_id,))
         game_info = cursor.fetchone()
 
         cursor.execute("""
             SELECT pts_last5, reb_last5, ast_last5, usage_last5, fg_pct_last5,
                    min_last5, plus_minus_last5
-            FROM group120836.player_rolling_stats
-            WHERE player_id = %s AND game_id = %s
+            FROM player_rolling_stats
+            WHERE player_id = ? AND game_id = ?
         """, (player_id, game_id))
         rolling = cursor.fetchone()
 
         cursor.execute("""
             SELECT pgs.pts, g.matchup
-            FROM group120836.player_game_stats pgs
-            JOIN group120836.games g ON pgs.game_id = g.game_id
-            WHERE pgs.player_id = %s
-              AND g.game_date <= (SELECT game_date FROM group120836.games WHERE game_id = %s)
+            FROM player_game_stats pgs
+            JOIN games g ON pgs.game_id = g.game_id
+            WHERE pgs.player_id = ?
+              AND g.game_date <= (SELECT game_date FROM games WHERE game_id = ?)
             ORDER BY g.game_date DESC LIMIT 10
         """, (player_id, game_id))
         raw_trend = cursor.fetchall()
@@ -127,8 +122,8 @@ def game_stats(player_id, game_id):
 
         cursor.execute("""
             SELECT pts, ast, reb, min, fg_pct, plus_minus, is_home, days_rest
-            FROM group120836.player_game_stats
-            WHERE player_id = %s AND game_id = %s
+            FROM player_game_stats
+            WHERE player_id = ? AND game_id = ?
         """, (player_id, game_id))
         game_pgs = cursor.fetchone()
 
@@ -136,8 +131,8 @@ def game_stats(player_id, game_id):
         cursor.execute("""
             SELECT offensive_rating_last5, defensive_rating_last5, pace_last5,
                    opp_offensive_rating_last5, opp_defensive_rating_last5, opp_pace_last5
-            FROM group120836.team_game_stats
-            WHERE game_id = %s AND team_abbreviation = %s
+            FROM team_game_stats
+            WHERE game_id = ? AND team_abbreviation = ?
         """, (game_id, team_abbr))
         team = cursor.fetchone()
 
@@ -218,9 +213,9 @@ def team_stats(team_abbr):
     # Matching columns exactly to IMG_0898[1].jpg
     query = """
         SELECT offensive_rating_last5, defensive_rating_last5, pace_last5 
-        FROM group120836.team_game_stats 
-        WHERE team_abbreviation = %s 
-        ORDER BY id DESC LIMIT 15
+        FROM team_game_stats 
+        WHERE team_abbreviation = ? 
+        ORDER BY rowid DESC LIMIT 15
     """
     
     try:

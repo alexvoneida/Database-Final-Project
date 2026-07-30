@@ -5,3 +5,6 @@
 TEST.py
 
 .venv/
+
+# Generated from postgres/*.csv by build_local_db.py
+local.db

@@ -4,7 +4,8 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.metrics import mean_absolute_error
+import matplotlib.pyplot as plt
+from sklearn.metrics import mean_absolute_error, r2_score
 
 TARGETS = ['PTS', 'REB', 'AST', 'FG_PCT']
 
@@ -93,11 +94,60 @@ def main():
     preds_arr = np.vstack(preds_list)
     true_arr = np.vstack(true_list)
 
-    for i, target in enumerate(TARGETS):
-        mae = mean_absolute_error(true_arr[:, i], preds_arr[:, i])
-        print(f"{target} MAE: {mae:.4f}")
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+    fig.suptitle('Predicted vs Actual', fontsize=14)
+
+    for i, (target, ax) in enumerate(zip(TARGETS, axes.flatten())):
+        actual = true_arr[:, i]
+        predicted = preds_arr[:, i]
+        mae = mean_absolute_error(actual, predicted)
+        r2 = r2_score(actual, predicted)
+        print(f"{target} — MAE: {mae:.4f}, R²: {r2:.4f}")
+
+        lo, hi = min(actual.min(), predicted.min()), max(actual.max(), predicted.max())
+        ax.scatter(actual, predicted, alpha=0.3, s=10)
+        ax.plot([lo, hi], [lo, hi], 'r--', linewidth=1)
+        ax.set_xlabel('Actual')
+        ax.set_ylabel('Predicted')
+        ax.set_title(f'{target}  |  MAE: {mae:.3f}  R²: {r2:.3f}')
+
+    plt.tight_layout()
+    plt.savefig('models/predicted_vs_actual.png', dpi=150)
+    plt.show()
 
     torch.save(model, 'models/multi_output_model.pth')
+
+    print_feature_importance(model, X_test, y_test, features)
+
+def print_feature_importance(model, X_test, y_test, features):
+    model.eval()
+    X_tensor = torch.tensor(X_test, dtype=torch.float32)
+    y_tensor = torch.tensor(y_test, dtype=torch.float32)
+
+    with torch.no_grad():
+        baseline_preds = model(X_tensor).numpy()
+    baseline_mae = np.mean([
+        mean_absolute_error(y_test[:, i], baseline_preds[:, i])
+        for i in range(len(TARGETS))
+    ])
+
+    importance = {}
+    rng = np.random.default_rng(42)
+    for j, feature in enumerate(features):
+        X_permuted = X_test.copy()
+        X_permuted[:, j] = rng.permutation(X_permuted[:, j])
+        with torch.no_grad():
+            permuted_preds = model(torch.tensor(X_permuted, dtype=torch.float32)).numpy()
+        permuted_mae = np.mean([
+            mean_absolute_error(y_test[:, i], permuted_preds[:, i])
+            for i in range(len(TARGETS))
+        ])
+        importance[feature] = permuted_mae - baseline_mae
+
+    ranked = sorted(importance.items(), key=lambda x: x[1], reverse=True)
+    print("\nFeature Importance (permutation, avg MAE increase across all targets):")
+    for feature, delta in ranked:
+        print(f"  {feature:<35} +{delta:.4f}")
 
 if __name__ == "__main__":
     main()

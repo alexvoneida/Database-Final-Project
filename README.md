@@ -20,7 +20,9 @@ pip install -r requirements.txt
 python postgres.py
 ```
 
-> Connects to `csci403` on `ada.mines.edu` under schema `group120836`. Make sure you're on the Mines network (or VPN).
+> Connects to `csci403` on `ada.mines.edu` under schema `group120836`. Make sure you're on the Mines network (or VPN). This step is only needed to rebuild the
+> original Postgres tables — the website itself now runs off the local snapshot
+> described below.
 
 **Train the model**
 
@@ -34,13 +36,22 @@ Trains a multi-output neural net and reports MAE for each target across the test
 
 ## 2. Website
 
+**Build the local database**
+
+The app reads a SQLite snapshot built from the CSV exports in `postgres/`, so no
+connection to `ada.mines.edu` is required.
+
+```bash
+python build_local_db.py
+```
+
 **Run the Flask app**
 
 ```bash
 python website/app.py
 ```
 
-You'll be prompted for your `ada.mines.edu` credentials in the terminal. Then open:
+Then open:
 
 ```
 http://localhost:6768
